@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8" />
+  <title>我的追番</title>
+  <link rel="stylesheet" href="src/css/main.css" />
+</head>
+<body>
+
+<header class="tabs">
+  <button class="active" data-status="all">全部</button>
+</header>
+
+<section class="search">
+  <input id="searchInput" placeholder="搜索动画（日文 / 中文）" />
+  <button id="searchBtn">搜索</button>
+</section>
+
+<section id="searchResult" class="result"></section>
+
+<hr class="divider" />
+
+<main id="list"></main>
+
+<script src="src/js/api.js"></script>
+</body>
+</html>
