@@ -159,8 +159,6 @@ class AnimeApp {
                         ${statusConfig.label}
                     </div>
                 </div>
-                <a href="https://bgm.tv/subject/${subject.id}" target="_blank" rel="noopener noreferrer" class="absolute inset-0 rounded-lg ring-0 focus:outline-none" aria-label="查看详情"></a>
-            </div>
         `;
     }
 
