@@ -1,14 +1,22 @@
 /**
- * Bangumi Anime Collection App
+ * Bangumi Anime Collection App (Optimized)
  * Fetches real-time data from the Bangumi (Bgm.tv) API v0
  */
 
 // --- Configuration ---
-
-const BANGUMI_USERNAME = '1202652'; // Change this to your Bangumi ID
+// Note: Some browsers may require a CORS proxy or a local server to fetch from bgm.tv directly
+const BANGUMI_USERNAME = '1202652'; 
 const API_BASE = 'https://api.bgm.tv/v0';
 
 const STATUS_CONFIG = {
+    wish: {
+        id: 'wish',
+        label: '我想看',
+        icon: 'heart',
+        color: 'text-pink-500',
+        bg: 'bg-pink-50',
+        border: 'border-pink-200'
+    },
     watching: {
         id: 'watching',
         label: '我在看',
@@ -49,43 +57,49 @@ class AnimeApp {
     constructor() {
         this.container = document.getElementById('app-container');
         this.skeleton = document.getElementById('loading-skeleton');
-        this.data = { watching: [], completed: [], on_hold: [], dropped: [] };
+        // Initialize all categories to prevent "undefined" errors
+        this.data = { wish: [], watching: [], completed: [], on_hold: [], dropped: [] };
     }
 
     /**
      * Fetch real data from Bangumi API v0
-     * @see https://bangumi.github.io/api/
+     */
+    /**
+     * Optimized Fetch: Gets all collection types to ensure "Wish" isn't buried
      */
     async fetchData() {
-        // Query params: type=2 (Anime), limit=50 (adjust as needed)
-        const url = `${API_BASE}/users/${BANGUMI_USERNAME}/collections?subject_type=2&offset=0&limit=50`;
-
+        // We define the types we want to fetch: 1=Wish, 2=Collect, 3=Do, 4=On Hold, 5=Dropped
+        const types = [1, 3, 2, 4, 5];
+        const processed = { wish: [], watching: [], completed: [], on_hold: [], dropped: [] };
+        
         try {
-            const response = await fetch(url, {
-                method: 'GET',
-                headers: {
-                    'User-Agent': 'GeminiAnimeList/1.0 (https://github.com/yourusername/project)',
-                    'Accept': 'application/json'
-                }
-            });
+            // Fetch multiple types in parallel for better performance and completeness
+            const fetchPromises = types.map(type => 
+                fetch(`${API_BASE}/users/${BANGUMI_USERNAME}/collections?subject_type=2&type=${type}&limit=30`, {
+                    headers: {
+                        'User-Agent': 'GeminiAnimeApp/1.1',
+                        'Accept': 'application/json'
+                    }
+                }).then(res => res.json())
+            );
 
-            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+            const results = await Promise.all(fetchPromises);
 
-            const result = await response.json();
-            const processed = { watching: [], completed: [], on_hold: [], dropped: [] };
+            results.forEach((result, index) => {
+                const type = types[index];
+                if (result.data) {
+                    result.data.forEach(item => {
+                        const subject = item.subject;
+                        subject.ep_status = item.ep_status || 0;
 
-            // API Response: result.data is an array of collection objects
-            result.data.forEach(item => {
-                const subject = item.subject;
-                // Inject metadata needed for the UI
-                subject.ep_status = item.ep_status || 0; 
-
-                // Bangumi Collection Types: 1=Wish, 2=Collect, 3=Do, 4=On Hold, 5=Dropped
-                switch (item.type) {
-                    case 3: processed.watching.push(subject); break;
-                    case 2: processed.completed.push(subject); break;
-                    case 4: processed.on_hold.push(subject); break;
-                    case 5: processed.dropped.push(subject); break;
+                        switch (type) {
+                            case 1: processed.wish.push(subject); break;
+                            case 3: processed.watching.push(subject); break;
+                            case 2: processed.completed.push(subject); break;
+                            case 4: processed.on_hold.push(subject); break;
+                            case 5: processed.dropped.push(subject); break;
+                        }
+                    });
                 }
             });
 
@@ -97,11 +111,13 @@ class AnimeApp {
     }
 
     showErrorMessage(msg) {
+        if (!this.container) return;
         this.container.innerHTML = `
             <div class="col-span-full p-10 text-center">
-                <div class="inline-flex items-center text-red-500 font-medium">
-                    <i data-lucide="alert-circle" class="w-5 h-5 mr-2"></i>
-                    无法加载数据: ${msg}
+                <div class="inline-flex flex-col items-center text-red-500 font-medium">
+                    <i data-lucide="alert-circle" class="w-10 h-10 mb-4 opacity-50"></i>
+                    <p>无法加载数据: ${msg}</p>
+                    <button onclick="location.reload()" class="mt-4 text-xs bg-gray-100 px-3 py-1 rounded hover:bg-gray-200 transition-colors">点击重试</button>
                 </div>
             </div>
         `;
@@ -137,19 +153,20 @@ class AnimeApp {
                     <h3 class="line-clamp-2 text-sm font-bold text-gray-900 leading-tight mb-1" title="${displayName}">
                         ${displayName}
                     </h3>
-                    ${originalName ? `<p class="mb-2 line-clamp-1 text-xs text-gray-500" title="${originalName}">${originalName}</p>` : ''}
+                    ${originalName ? `<p class="mb-2 line-clamp-1 text-xs text-gray-500 italic" title="${originalName}">${originalName}</p>` : ''}
                     <div class="mt-auto inline-flex items-center text-xs font-medium ${statusConfig.color}">
                         <i data-lucide="${statusConfig.icon}" class="w-3 h-3 mr-1"></i>
                         ${statusConfig.label}
                     </div>
                 </div>
+                <a href="https://bgm.tv/subject/${subject.id}" target="_blank" rel="noopener noreferrer" class="absolute inset-0 rounded-lg ring-0 focus:outline-none" aria-label="查看详情"></a>
             </div>
         `;
     }
 
     createSectionHTML(key, items) {
         const config = STATUS_CONFIG[key];
-        if (items.length === 0) return ''; // Skip empty sections or show empty state
+        if (!items || items.length === 0) return ''; 
 
         const cardsHTML = items.map(item => this.createCardHTML(item, config)).join('');
 
@@ -165,7 +182,7 @@ class AnimeApp {
                         </span>
                     </div>
                     <button class="rounded-full p-1 text-gray-400 hover:bg-gray-100 transition-colors focus:outline-none toggle-btn">
-                        <i data-lucide="chevron-up" class="w-5 h-5 transition-transform duration-200"></i>
+                        <i data-lucide="chevron-up" class="w-5 h-5 transition-all duration-200"></i>
                     </button>
                 </div>
                 <div class="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 section-content">
@@ -184,7 +201,9 @@ class AnimeApp {
                 const isHidden = content.style.display === 'none';
                 
                 content.style.display = isHidden ? 'grid' : 'none';
+                // Using transform for smoother animation than replacing the icon
                 icon.style.transform = isHidden ? 'rotate(0deg)' : 'rotate(180deg)';
+                header.setAttribute('aria-expanded', isHidden ? 'true' : 'false');
             });
         });
     }
@@ -195,7 +214,8 @@ class AnimeApp {
         if (this.skeleton) this.skeleton.classList.add('hidden');
         if (this.container) this.container.classList.remove('hidden');
 
-        const sectionsOrder = ['watching', 'completed', 'on_hold', 'dropped'];
+        // Render Order: Wish -> Watching -> Completed -> On Hold -> Dropped
+        const sectionsOrder = ['wish', 'watching', 'completed', 'on_hold', 'dropped'];
         let htmlContent = '';
 
         sectionsOrder.forEach(key => {
@@ -203,9 +223,15 @@ class AnimeApp {
         });
 
         if (this.container) {
-            this.container.innerHTML = htmlContent || '<p class="text-center text-gray-400">暂无收藏记录</p>';
+            this.container.innerHTML = htmlContent || `
+                <div class="p-20 text-center text-gray-400">
+                    <i data-lucide="search-x" class="w-12 h-12 mx-auto mb-4 opacity-20"></i>
+                    <p>该用户的动画收藏列表为空</p>
+                </div>
+            `;
         }
 
+        // Re-trigger Lucide icons for the new HTML
         if (window.lucide) window.lucide.createIcons();
         this.bindEvents();
     }
