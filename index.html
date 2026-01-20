@@ -1,27 +1,102 @@
 <!DOCTYPE html>
-<html lang="zh">
+<html lang="zh-CN">
 <head>
-  <meta charset="UTF-8" />
-  <title>我的追番</title>
-  <link rel="stylesheet" href="src/css/main.css" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="https://github.githubassets.com/favicons/favicon.svg" type="image/svg+xml">
+    <title>我的动画 | Anime Collection</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <!-- Custom Config & Styles -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#fdf2f8',
+                            100: '#fce7f3',
+                            200: '#fbcfe8',
+                            300: '#f9a8d4',
+                            400: '#f472b6',
+                            500: '#ec4899',
+                            600: '#db2777',
+                            700: '#be185d',
+                            800: '#9d174d',
+                            900: '#831843',
+                        }
+                    },
+                    animation: {
+                        'fade-in': 'fadeIn 0.5s ease-out forwards',
+                    },
+                    keyframes: {
+                        fadeIn: {
+                            '0%': { opacity: '0', transform: 'translateY(10px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <link rel="stylesheet" href="main.css">
 </head>
-<body>
+<body class="bg-gray-50 text-gray-900 min-h-screen flex flex-col selection:bg-brand-100 selection:text-brand-900">
 
-<header class="tabs">
-  <button class="active" data-status="all">全部</button>
-</header>
+    <!-- Header -->
+    <header class="sticky top-0 z-50 bg-white/80 backdrop-blur-md shadow-sm border-b border-gray-200/50 transition-all duration-300">
+        <div class="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
+            <div class="flex items-center gap-2">
+                <h1 class="text-xl font-bold tracking-tight text-gray-900">我的动漫</h1>
+            </div>
+            
+            <div class="flex items-center gap-4">
+                <button class="rounded-full p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-900 transition-colors focus:outline-none focus:ring-2 focus:ring-brand-200" aria-label="搜索">
+                    <i data-lucide="search" class="w-5 h-5"></i>
+                </button>
+            </div>
+        </div>
+    </header>
 
-<section class="search">
-  <input id="searchInput" placeholder="搜索动画（日文 / 中文）" />
-  <button id="searchBtn">搜索</button>
-</section>
+    <!-- Main Content -->
+    <main class="flex-grow mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+        
+        <!-- Loading Skeleton (Initial State) -->
+        <div id="loading-skeleton" class="space-y-12 animate-pulse">
+            <!-- Skeleton Group 1 -->
+            <div>
+                <div class="h-8 w-32 bg-gray-200 rounded mb-6"></div>
+                <div class="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+                    <div class="aspect-[2/3] bg-gray-200 rounded-lg"></div>
+                    <div class="aspect-[2/3] bg-gray-200 rounded-lg"></div>
+                    <div class="aspect-[2/3] bg-gray-200 rounded-lg"></div>
+                    <div class="aspect-[2/3] bg-gray-200 rounded-lg"></div>
+                    <div class="aspect-[2/3] bg-gray-200 rounded-lg"></div>
+                    <div class="aspect-[2/3] bg-gray-200 rounded-lg"></div>
+                </div>
+            </div>
+             <!-- Skeleton Group 2 -->
+             <div>
+                <div class="h-8 w-40 bg-gray-200 rounded mb-6"></div>
+                <div class="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+                    <div class="aspect-[2/3] bg-gray-200 rounded-lg"></div>
+                    <div class="aspect-[2/3] bg-gray-200 rounded-lg"></div>
+                    <div class="aspect-[2/3] bg-gray-200 rounded-lg"></div>
+                    <div class="aspect-[2/3] bg-gray-200 rounded-lg"></div>
+                </div>
+            </div>
+        </div>
 
-<section id="searchResult" class="result"></section>
+        <!-- App Container (Content injected here) -->
+        <div id="app-container" class="hidden space-y-2"></div>
 
-<hr class="divider" />
+    </main>
 
-<main id="list"></main>
-
-<script src="src/js/api.js"></script>
+    <script src="main.js"></script>
 </body>
 </html>
